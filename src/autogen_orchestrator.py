@@ -13,6 +13,7 @@ Workflow:
 import logging
 import asyncio
 import concurrent.futures
+import re
 from typing import Dict, Any, List, Optional
 
 from src.agents.autogen_agents import create_research_team
@@ -40,6 +41,41 @@ class AutoGenOrchestrator:
         self.logger.info("Research team created successfully")
 
         self.workflow_trace: List[Dict[str, Any]] = []
+
+    # ── Source extraction (for output safety / citation consistency) ──────────
+
+    @staticmethod
+    def _extract_sources(messages: List[Dict[str, Any]], response: str) -> List[Dict[str, str]]:
+        """
+        Pull a structured sources list out of the agent conversation so the
+        output guardrail can run citation-consistency checks against it.
+
+        Strategy:
+          - URLs from any agent message → {url, title=url}
+          - [Source: Title] tokens cited in the Writer's response → {title}
+        """
+        url_pattern = re.compile(r'https?://[^\s<>"{}|\\^`\[\]]+')
+        cite_pattern = re.compile(r'\[Source:\s*([^\]]+)\]')
+
+        seen_urls: set = set()
+        seen_titles: set = set()
+        sources: List[Dict[str, str]] = []
+
+        for msg in messages:
+            content = msg.get("content", "") or ""
+            for url in url_pattern.findall(content):
+                if url not in seen_urls:
+                    seen_urls.add(url)
+                    sources.append({"title": url, "url": url})
+
+        for cited in cite_pattern.findall(response or ""):
+            title = cited.strip()
+            key = title.lower()
+            if title and key not in seen_titles:
+                seen_titles.add(key)
+                sources.append({"title": title, "url": ""})
+
+        return sources
 
     # ── Public entry point ─────────────────────────────────────────────────────
 
@@ -104,8 +140,15 @@ class AutoGenOrchestrator:
             }
 
         # ── Step 3: Output safety check ────────────────────────────────────────
+        sources = self._extract_sources(
+            result.get("conversation_history", []),
+            result.get("response", ""),
+        )
+        result.setdefault("metadata", {})["sources"] = sources
+
         output_check = self.safety_manager.check_output_safety(
-            result.get("response", "")
+            result.get("response", ""),
+            sources=sources,
         )
 
         if not output_check["safe"]:
@@ -161,7 +204,16 @@ class AutoGenOrchestrator:
                 "metadata": {"error": True, "safety_events": self.safety_manager.get_safety_events()},
             }
 
-        output_check = self.safety_manager.check_output_safety(result.get("response", ""))
+        sources = self._extract_sources(
+            result.get("conversation_history", []),
+            result.get("response", ""),
+        )
+        result.setdefault("metadata", {})["sources"] = sources
+
+        output_check = self.safety_manager.check_output_safety(
+            result.get("response", ""),
+            sources=sources,
+        )
         if not output_check["safe"]:
             result["response"] = output_check["response"]
             result["metadata"]["output_sanitized"] = True

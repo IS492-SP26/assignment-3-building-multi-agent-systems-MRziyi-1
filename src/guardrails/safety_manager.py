@@ -145,7 +145,13 @@ class SafetyManager:
 
         # The OutputGuardrail._sanitize() already handles PII redaction vs harmful block.
         # Use its sanitized output directly; only hard-refuse for truly harmful content.
-        has_harmful = any(v.get("validator") != "pii" for v in raw_violations)
+        # "Harmful" here matches output_guardrail._sanitize's blocking criteria:
+        # high-severity, non-PII violations. Low-severity findings (e.g.
+        # citation_consistency) must NOT trigger a wholesale refusal.
+        has_harmful = any(
+            v.get("severity") == "high" and v.get("validator") != "pii"
+            for v in raw_violations
+        )
 
         result: Dict[str, Any] = {
             "safe": is_safe,

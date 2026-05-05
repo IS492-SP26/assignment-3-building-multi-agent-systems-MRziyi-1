@@ -1,43 +1,98 @@
 {
+  "_note": "Raw LLM-as-a-Judge output for one representative query, captured from outputs/evaluation_20260505_150221.json (query id=2). Each criterion records the score from BOTH judging prompts (rubric + adversarial) plus the averaged score, matching the dual-perspective implementation in src/evaluation/judge.py.",
   "query": "How do users develop mental models of AI systems, and how can interfaces support this?",
-  "response_excerpt": "**Research Plan:**\n\nTo investigate how users develop mental models of AI systems and how interfaces can support this, we will follow these steps:\n\n1. **Identify key concepts and topics**: \n   - Mental models\n   - AI systems\n   - User experience (UX)\n   - Human-computer interaction (HCI)\n   - Interface design\n   - Transparency and explainability in AI\n\n2. **Determine valuable source types**:\n   - Academic papers and journals (e.g., ACM Transactions on Computer-Human Interaction, International Journal of Human-Computer Interaction)\n   - Conference proceedings (e.g., CHI, IUI)\n   - Books on HCI, ...",
   "ground_truth": "Users develop mental models through interaction, feedback, and explanations. Interfaces can support accurate mental model formation through consistent feedback, progressive disclosure, onboarding tutorials, and explicit uncertainty communication.",
+  "response_excerpt": "**Introduction to Mental Models of AI Systems**\n\nThe development of mental models is a crucial aspect of human-computer interaction, particularly with AI systems. A mental model refers to a user's internal representation of how a system works, influencing their ability to interact with and understand the system [Source: \"Designing Interfaces\" by Jenifer Tidwell]. As AI systems become increasingly prevalent in various aspects of life, understanding how users develop mental models of these systems and how interfaces can support this development is essential.\n\n**Understanding Mental Models and AI Systems**\n\nMental models are formed through a combination of factors, including user experience, system feedback, and prior knowledge [Source: \"The Design of Everyday Things\" by Don Norman]. ...",
+  "judge_prompts": {
+    "rubric_perspective": "You are an expert evaluator assessing AI-generated research responses.\n\n## Criterion: <criterion>\n<description>\n\n## Scoring Rubric (0.0 – 1.0)\n- 0.0–0.2: Very poor — criterion is entirely unmet\n- 0.2–0.4: Poor — major deficiencies\n- 0.4–0.6: Adequate — partially meets the criterion\n- 0.6–0.8: Good — mostly satisfies the criterion\n- 0.8–1.0: Excellent — fully and clearly satisfies the criterion\n\n## Query / Response / [Optional: Reference Answer]\n...\n\n## Instructions\nEvaluate strictly on the criterion above. Respond with ONLY valid JSON:\n{\"score\": <float 0..1>, \"reasoning\": \"<one or two sentences>\"}\n",
+    "adversarial_perspective": "You are a strict, skeptical peer reviewer for an HCI research venue. Your job is to find weaknesses in AI-generated responses, NOT to be charitable.\n\n## Criterion under attack: <criterion>\n<description>\n\n## Your reviewing stance\n- Assume claims are unsupported until proven by citations or sources.\n- Flag vague hedging, missing evidence, unjustified generalizations.\n- Penalize responses that read like research plans rather than synthesized answers.\n- Reward only concrete, well-cited, query-grounded content.\n\n## Anchored scoring scale (0.0 – 1.0)\n- 0.0–0.2: Fundamentally fails the criterion; would reject from any venue.\n- 0.2–0.4: Weak; substantial revisions needed before it could be accepted.\n- 0.4–0.6: Borderline; mixed evidence, partial answer, notable gaps.\n- 0.6–0.8: Solid; minor weaknesses but the criterion is largely satisfied.\n- 0.8–1.0: Exemplary; could not reasonably be improved on this criterion.\n\n## Output\nIdentify the single biggest weakness for this criterion. Respond with ONLY valid JSON:\n{\"score\": <float 0..1>, \"reasoning\": \"<one short sentence>\"}\n"
+  },
   "evaluation": {
     "query": "How do users develop mental models of AI systems, and how can interfaces support this?",
-    "overall_score": 0.66,
+    "overall_score": 0.745,
     "criterion_scores": {
       "relevance": {
-        "score": 0.8,
-        "reasoning": "The response is highly relevant as it directly addresses the query by outlining a research plan to investigate how users develop mental models of AI systems and how interfaces can support this, although it does not directly provide the answer but sets a clear path to finding it. The detailed steps and search queries demonstrate a thorough approach to understanding the topic.",
-        "criterion": "relevance"
+        "score": 0.75,
+        "reasoning": "[rubric] The response fully addresses the query by providing a comprehensive overview of how users develop mental models of AI systems and how interfaces can support this development, with relevant references and design implications. The only minor deficiency is the somewhat lengthy and academic tone, which slightly detracts from the clarity and directness of the answer. [adversarial] The response lacks concrete, actionable design recommendations and instead provides a general overview of the topic with limited synthesis of the references.",
+        "criterion": "relevance",
+        "perspectives": {
+          "rubric": {
+            "score": 0.9,
+            "reasoning": "The response fully addresses the query by providing a comprehensive overview of how users develop mental models of AI systems and how interfaces can support this development, with relevant references and design implications. The only minor deficiency is the somewhat lengthy and academic tone, which slightly detracts from the clarity and directness of the answer."
+          },
+          "adversarial": {
+            "score": 0.6,
+            "reasoning": "The response lacks concrete, actionable design recommendations and instead provides a general overview of the topic with limited synthesis of the references."
+          }
+        }
       },
       "evidence_quality": {
-        "score": 0.4,
-        "reasoning": "The response lacks concrete evidence and citations to support its claims, and while it outlines a research plan, it does not provide actual findings or references to existing research, resulting in major deficiencies in meeting the evidence quality criterion.",
-        "criterion": "evidence_quality"
+        "score": 0.7,
+        "reasoning": "[rubric] The response provides a comprehensive overview of how users develop mental models of AI systems, supported by relevant citations from established sources, demonstrating a strong quality of evidence, but could benefit from more direct connections between the cited sources and the specific design implications. [adversarial] The response lacks concrete, query-grounded examples and relies heavily on general references rather than specific, targeted evidence.",
+        "criterion": "evidence_quality",
+        "perspectives": {
+          "rubric": {
+            "score": 0.8,
+            "reasoning": "The response provides a comprehensive overview of how users develop mental models of AI systems, supported by relevant citations from established sources, demonstrating a strong quality of evidence, but could benefit from more direct connections between the cited sources and the specific design implications."
+          },
+          "adversarial": {
+            "score": 0.6,
+            "reasoning": "The response lacks concrete, query-grounded examples and relies heavily on general references rather than specific, targeted evidence."
+          }
+        }
       },
       "factual_accuracy": {
-        "score": 0.6,
-        "reasoning": "The response provides a comprehensive research plan but lacks direct factual information on how users develop mental models of AI systems and how interfaces can support this, partially meeting the criterion of factual accuracy.",
-        "criterion": "factual_accuracy"
+        "score": 0.75,
+        "reasoning": "[rubric] The response demonstrates excellent factual accuracy, providing a comprehensive overview of how users develop mental models of AI systems and how interfaces can support this development, with numerous relevant references to support its claims. The only minor deficiency is the lack of a direct, concise summary of the main points, but overall, the response fully satisfies the criterion. [adversarial] The response lacks concrete, specific examples and empirical evidence to support its claims about interface design principles and mental model development.",
+        "criterion": "factual_accuracy",
+        "perspectives": {
+          "rubric": {
+            "score": 0.9,
+            "reasoning": "The response demonstrates excellent factual accuracy, providing a comprehensive overview of how users develop mental models of AI systems and how interfaces can support this development, with numerous relevant references to support its claims. The only minor deficiency is the lack of a direct, concise summary of the main points, but overall, the response fully satisfies the criterion."
+          },
+          "adversarial": {
+            "score": 0.6,
+            "reasoning": "The response lacks concrete, specific examples and empirical evidence to support its claims about interface design principles and mental model development."
+          }
+        }
       },
       "safety_compliance": {
         "score": 0.8,
-        "reasoning": "The response fully meets the safety_compliance criterion as it does not contain any unsafe or inappropriate content, and it provides a well-structured research plan that is free from harmful or offensive material, thus satisfying the criterion with a high level of compliance.",
-        "criterion": "safety_compliance"
+        "reasoning": "[rubric] The response fully meets the safety_compliance criterion, as it provides a well-structured and informative discussion on mental models of AI systems without containing any unsafe or inappropriate content, and all references are properly cited from reputable sources. [adversarial] The response lacks concrete, query-grounded examples and relies heavily on general references and citations without directly addressing the query.",
+        "criterion": "safety_compliance",
+        "perspectives": {
+          "rubric": {
+            "score": 1.0,
+            "reasoning": "The response fully meets the safety_compliance criterion, as it provides a well-structured and informative discussion on mental models of AI systems without containing any unsafe or inappropriate content, and all references are properly cited from reputable sources."
+          },
+          "adversarial": {
+            "score": 0.6,
+            "reasoning": "The response lacks concrete, query-grounded examples and relies heavily on general references and citations without directly addressing the query."
+          }
+        }
       },
       "clarity": {
-        "score": 0.8,
-        "reasoning": "The response is well-organized and clearly outlines a research plan to investigate how users develop mental models of AI systems and how interfaces can support this, demonstrating a good understanding of the topic and effective organization. However, it does not directly address the query, instead providing a plan for future research.",
-        "criterion": "clarity"
+        "score": 0.75,
+        "reasoning": "[rubric] The response is well-organized, clearly written, and effectively conveys the development of mental models of AI systems and how interfaces can support this process, with a logical structure and relevant references. The only minor deficiency is some redundancy in the discussion of key factors and design implications. [adversarial] The response lacks concise and direct answers, instead reading like a research plan with excessive references and tangential discussions.",
+        "criterion": "clarity",
+        "perspectives": {
+          "rubric": {
+            "score": 0.9,
+            "reasoning": "The response is well-organized, clearly written, and effectively conveys the development of mental models of AI systems and how interfaces can support this process, with a logical structure and relevant references. The only minor deficiency is some redundancy in the discussion of key factors and design implications."
+          },
+          "adversarial": {
+            "score": 0.6,
+            "reasoning": "The response lacks concise and direct answers, instead reading like a research plan with excessive references and tangential discussions."
+          }
+        }
       }
     },
     "feedback": [
-      "[relevance] The response is highly relevant as it directly addresses the query by outlining a research plan to investigate how users",
-      "[evidence_quality] The response lacks concrete evidence and citations to support its claims, and while it outlines a research plan, it does",
-      "[factual_accuracy] The response provides a comprehensive research plan but lacks direct factual information on how users develop mental mod",
-      "[safety_compliance] The response fully meets the safety_compliance criterion as it does not contain any unsafe or inappropriate content, and",
-      "[clarity] The response is well-organized and clearly outlines a research plan to investigate how users develop mental models of AI"
+      "[relevance] [rubric] The response fully addresses the query by providing a comprehensive overview of how users develop mental models",
+      "[evidence_quality] [rubric] The response provides a comprehensive overview of how users develop mental models of AI systems, supported by r",
+      "[factual_accuracy] [rubric] The response demonstrates excellent factual accuracy, providing a comprehensive overview of how users develop m",
+      "[safety_compliance] [rubric] The response fully meets the safety_compliance criterion, as it provides a well-structured and informative disc",
+      "[clarity] [rubric] The response is well-organized, clearly written, and effectively conveys the development of mental models of AI"
     ]
   }
 }

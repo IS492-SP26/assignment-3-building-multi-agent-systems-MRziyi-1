@@ -14,9 +14,10 @@ sys.path.insert(0, str(project_root))
 
 import streamlit as st
 import asyncio
+import json
 import yaml
 from datetime import datetime
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from dotenv import load_dotenv
 
 from src.autogen_orchestrator import AutoGenOrchestrator
@@ -53,6 +54,9 @@ def initialize_session_state():
 
     if 'show_safety_log' not in st.session_state:
         st.session_state.show_safety_log = False
+
+    if 'show_judge_results' not in st.session_state:
+        st.session_state.show_judge_results = True
 
 async def process_query(query: str) -> Dict[str, Any]:
     """
@@ -272,6 +276,15 @@ def display_sidebar():
             value=st.session_state.show_safety_log
         )
 
+        # Show LLM-as-a-Judge evaluation panel
+        st.session_state.show_judge_results = st.checkbox(
+            "Show LLM-as-a-Judge Results",
+            value=st.session_state.show_judge_results,
+            help="Loads the most recent batch evaluation report from outputs/ "
+                 "(or falls back to docs/sample_evaluation.json) and displays "
+                 "criterion-level scores from the dual-prompt judge.",
+        )
+
         st.divider()
 
         st.title("📊 Statistics")
@@ -303,6 +316,110 @@ def display_sidebar():
         topic = config.get("system", {}).get("topic", "General")
         st.markdown(f"**System:** {system_name}")
         st.markdown(f"**Topic:** {topic}")
+
+
+def _load_latest_evaluation_report() -> Optional[Dict[str, Any]]:
+    """
+    Load the most recent batch evaluation report.
+
+    Search order:
+    1. outputs/evaluation_*.json — newest by mtime (fresh runs land here)
+    2. docs/sample_evaluation.json — tracked artifact, always present in repo
+    """
+    project_root = Path(__file__).parent.parent.parent
+
+    outputs_dir = project_root / "outputs"
+    if outputs_dir.exists():
+        candidates = sorted(
+            outputs_dir.glob("evaluation_*.json"),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
+        for path in candidates:
+            try:
+                with open(path, "r") as f:
+                    return {"path": str(path.relative_to(project_root)), "data": json.load(f)}
+            except Exception:
+                continue
+
+    sample_path = project_root / "docs" / "sample_evaluation.json"
+    if sample_path.exists():
+        try:
+            with open(sample_path, "r") as f:
+                return {"path": str(sample_path.relative_to(project_root)), "data": json.load(f)}
+        except Exception:
+            return None
+
+    return None
+
+
+def display_judge_results():
+    """Render the LLM-as-a-Judge evaluation panel from the latest report."""
+    st.divider()
+    st.markdown("### 📈 LLM-as-a-Judge Results")
+
+    report = _load_latest_evaluation_report()
+    if report is None:
+        st.info(
+            "No evaluation report found. Run `python main.py --mode evaluate` "
+            "to generate one in `outputs/`."
+        )
+        return
+
+    data = report["data"]
+    st.caption(f"Source: `{report['path']}` · generated {data.get('timestamp', 'unknown')}")
+
+    summary = data.get("summary", {})
+    scores = data.get("scores", {})
+
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Queries", summary.get("total_queries", 0))
+    col2.metric("Successful", summary.get("successful", 0))
+    col3.metric("Success rate", f"{summary.get('success_rate', 0.0):.0%}")
+    col4.metric("Overall score", f"{scores.get('overall_average', 0.0):.3f}")
+
+    by_criterion = scores.get("by_criterion", {})
+    if by_criterion:
+        st.markdown("**Per-criterion average (dual-prompt rubric + adversarial):**")
+        for name, value in by_criterion.items():
+            st.progress(min(max(value, 0.0), 1.0), text=f"{name}: {value:.3f}")
+
+    best = data.get("best_result")
+    worst = data.get("worst_result")
+    if best or worst:
+        bc, wc = st.columns(2)
+        if best:
+            with bc:
+                st.success(f"**Best**: [{best.get('score', 0.0):.3f}] {best.get('query', '')[:80]}")
+        if worst:
+            with wc:
+                st.error(f"**Worst**: [{worst.get('score', 0.0):.3f}] {worst.get('query', '')[:80]}")
+
+    detailed = data.get("detailed_results", [])
+    if detailed:
+        with st.expander("Per-query criterion breakdown", expanded=False):
+            for i, result in enumerate(detailed, 1):
+                query = result.get("query", "")
+                evaluation = result.get("evaluation", {})
+                overall = evaluation.get("overall_score", 0.0)
+                criterion_scores = evaluation.get("criterion_scores", {})
+
+                st.markdown(f"**Q{i}.** [{overall:.3f}] {query}")
+                if not criterion_scores:
+                    continue
+
+                rows = []
+                for cname, cdata in criterion_scores.items():
+                    perspectives = cdata.get("perspectives", {})
+                    rubric_score = perspectives.get("rubric", {}).get("score")
+                    adv_score = perspectives.get("adversarial", {}).get("score")
+                    rows.append({
+                        "criterion": cname,
+                        "avg": f"{cdata.get('score', 0.0):.2f}",
+                        "rubric": f"{rubric_score:.2f}" if rubric_score is not None else "—",
+                        "adversarial": f"{adv_score:.2f}" if adv_score is not None else "—",
+                    })
+                st.table(rows)
 
 
 def display_history():
@@ -405,6 +522,10 @@ def main():
         4. **Critic** verifies quality
         5. **Safety** checks ensure appropriate content
         """)
+
+    # LLM-as-a-Judge evaluation results (if enabled)
+    if st.session_state.show_judge_results:
+        display_judge_results()
 
     # Safety log (if enabled)
     if st.session_state.show_safety_log:

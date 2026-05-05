@@ -225,8 +225,9 @@ logs/
 data/*.csv
 *.pkl
 *.pickle
-# NOTE: outputs/ artifacts (session JSON, synthesized answer, evaluation JSON,
-# judge samples, screenshots) are required by the assignment rubric and MUST
-# be tracked. Only the technical report markdown is excluded — see top of file.
+# NOTE: outputs/ is the local working directory for fresh runs and is gitignored
+# above. The rubric-required artifacts (session JSON, synthesized answer,
+# evaluation JSON, judge sample, screenshots) live as TRACKED copies under docs/
+# — see README.md "Project Structure" for the docs/ → outputs/ mapping.
 # NOTE: data/test_queries.json is required (>5 diverse evaluation prompts) and
 # must be tracked. Only large user-contributed datasets should be excluded.
