@@ -1,99 +1,127 @@
 """
 Main Entry Point
-Can be used to run the system or evaluation.
 
 Usage:
-  python main.py --mode cli           # Run CLI interface
-  python main.py --mode web           # Run web interface
-  python main.py --mode evaluate      # Run evaluation
+  python main.py --mode cli           # Interactive CLI
+  python main.py --mode web           # Streamlit web UI
+  python main.py --mode evaluate      # Full batch evaluation with LLM-as-a-Judge
+  python main.py --mode autogen       # Quick AutoGen demo (default)
 """
 
 import argparse
 import asyncio
 import sys
+import yaml
 from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 def run_cli():
-    """Run CLI interface."""
+    """Run interactive CLI interface."""
     from src.ui.cli import main as cli_main
     cli_main()
 
 
 def run_web():
-    """Run web interface."""
+    """Launch Streamlit web interface."""
     import subprocess
     print("Starting Streamlit web interface...")
     subprocess.run(["streamlit", "run", "src/ui/streamlit_app.py"])
 
 
-async def run_evaluation():
-    """Run system evaluation."""
-    import yaml
-    from dotenv import load_dotenv
-    from src.autogen_orchestrator import AutoGenOrchestrator
-    
-    # Load environment variables
-    load_dotenv()
+async def run_evaluation(queries_path: str = "data/test_queries.json"):
+    """
+    Run full batch evaluation with LLM-as-a-Judge.
 
-    # Load config
-    with open("config.yaml", 'r') as f:
+    Loads test queries from `queries_path`, processes each through the
+    multi-agent orchestrator, scores every response with LLMJudge, and
+    saves a detailed JSON report + plain-text summary to outputs/.
+    """
+    from src.autogen_orchestrator import AutoGenOrchestrator
+    from src.evaluation.evaluator import SystemEvaluator
+
+    with open("config.yaml", "r") as f:
         config = yaml.safe_load(f)
 
-    # Initialize AutoGen orchestrator
-    print("Initializing AutoGen orchestrator...")
-    orchestrator = AutoGenOrchestrator(config)
-    
-    # For now, run a simple test query
-    # TODO: Integrate with SystemEvaluator for full evaluation
-    # Suggested implementation:
-    # - Import SystemEvaluator from src/evaluation/evaluator.py
-    # - Load test queries from data/example_queries.json
-    # - Run batch evaluation and print/save the report summary
-    print("\n" + "=" * 70)
-    print("RUNNING TEST QUERY")
     print("=" * 70)
-    
-    test_query = "What are the key principles of accessible user interface design?"
-    print(f"\nQuery: {test_query}\n")
-    
-    result = orchestrator.process_query(test_query)
-    
-    print("\n" + "=" * 70)
-    print("RESULTS")
+    print("MULTI-AGENT SYSTEM EVALUATION")
     print("=" * 70)
-    print(f"\nResponse:\n{result.get('response', 'No response generated')}")
-    print(f"\nMetadata:")
-    print(f"  - Messages: {result.get('metadata', {}).get('num_messages', 0)}")
-    print(f"  - Sources: {result.get('metadata', {}).get('num_sources', 0)}")
-    
+
+    # Initialize orchestrator
+    print("\nInitializing AutoGen orchestrator...")
+    try:
+        orchestrator = AutoGenOrchestrator(config)
+        print("Orchestrator ready.")
+    except Exception as e:
+        print(f"Failed to initialize orchestrator: {e}")
+        sys.exit(1)
+
+    # Initialize evaluator
+    evaluator = SystemEvaluator(config, orchestrator=orchestrator)
+
+    # Run evaluation
+    print(f"\nRunning evaluation on: {queries_path}")
+    print("This will process each query through all agents and score with LLM-as-a-Judge.\n")
+
+    report = await evaluator.evaluate_system(queries_path)
+
+    # Print summary
     print("\n" + "=" * 70)
-    print("Note: Full evaluation with SystemEvaluator can be implemented")
+    print("EVALUATION SUMMARY")
     print("=" * 70)
+
+    summary = report.get("summary", {})
+    scores = report.get("scores", {})
+
+    print(f"\nTotal queries:   {summary.get('total_queries', 0)}")
+    print(f"Successful:      {summary.get('successful', 0)}")
+    print(f"Failed:          {summary.get('failed', 0)}")
+    print(f"Success rate:    {summary.get('success_rate', 0.0):.1%}")
+    print(f"\nOverall average score: {scores.get('overall_average', 0.0):.3f}")
+
+    print("\nScores by criterion:")
+    for criterion, score in scores.get("by_criterion", {}).items():
+        bar = "█" * int(score * 20)
+        print(f"  {criterion:<25} {score:.3f}  {bar}")
+
+    best = report.get("best_result")
+    worst = report.get("worst_result")
+    if best:
+        print(f"\nBest  query: [{best['score']:.3f}] {best['query'][:60]}")
+    if worst:
+        print(f"Worst query: [{worst['score']:.3f}] {worst['query'][:60]}")
+
+    print(f"\nFull results saved to outputs/")
 
 
 def run_autogen():
-    """Run AutoGen example."""
+    """Quick AutoGen demo (one test query end-to-end)."""
     import subprocess
     print("Running AutoGen example...")
     subprocess.run([sys.executable, "example_autogen.py"])
 
 
 def main():
-    """Main entry point."""
     parser = argparse.ArgumentParser(
-        description="Multi-Agent Research Assistant"
+        description="Multi-Agent Research Assistant — AI Transparency in HCI"
     )
     parser.add_argument(
         "--mode",
         choices=["cli", "web", "evaluate", "autogen"],
         default="autogen",
-        help="Mode to run: cli, web, evaluate, or autogen (default)"
+        help="Mode to run (default: autogen demo)",
     )
     parser.add_argument(
         "--config",
         default="config.yaml",
-        help="Path to configuration file"
+        help="Path to configuration file",
+    )
+    parser.add_argument(
+        "--queries",
+        default="data/test_queries.json",
+        help="Path to test queries JSON file (evaluate mode only)",
     )
     args = parser.parse_args()
 
@@ -102,7 +130,7 @@ def main():
     elif args.mode == "web":
         run_web()
     elif args.mode == "evaluate":
-        asyncio.run(run_evaluation())
+        asyncio.run(run_evaluation(args.queries))
     elif args.mode == "autogen":
         run_autogen()
 

@@ -39,11 +39,16 @@ def create_model_client(config: Dict[str, Any]) -> OpenAIChatCompletionClient:
         api_key = os.getenv("GROQ_API_KEY")
         if not api_key:
             raise ValueError("GROQ_API_KEY not found in environment")
-        
+
+        # Llama-3.3-70B on Groq occasionally emits Qwen-style parallel tool
+        # calls (`<function=foo>{...}<function>`) which Groq's parser then
+        # rejects with `tool_use_failed`. Force sequential tool calls to make
+        # the tool format more reliable.
         return OpenAIChatCompletionClient(
             model=model_config.get("name", "llama-3.3-70b-versatile"),
             api_key=api_key,
             base_url="https://api.groq.com/openai/v1",
+            parallel_tool_calls=False,
             model_capabilities={
                 "json_output": False,
                 "vision": False,
@@ -156,7 +161,15 @@ You have access to tools for web search and paper search. When conducting resear
 2. Look for recent, high-quality sources
 3. Extract key findings, quotes, and data
 4. Note all source URLs and citations
-5. Gather evidence that directly addresses the research query"""
+5. Gather evidence that directly addresses the research query
+
+IMPORTANT — TOOL USE PROTOCOL:
+- Issue ONE tool call per turn. Do NOT emit multiple `<function=...>` blocks
+  in a single response. Wait for each tool's result before issuing the next call.
+- Use only the registered tools (`web_search`, `paper_search`). Never invent
+  tool names like `confirmation`, `terminate`, or `google_search`.
+- After 2-3 tool calls (one per turn), summarise findings as plain text and
+  hand off to the Writer."""
 
     # Use custom prompt from config if available
     custom_prompt = agent_config.get("system_prompt", "")

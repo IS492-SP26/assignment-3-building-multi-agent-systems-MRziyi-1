@@ -1,189 +1,161 @@
 """
 Output Guardrail
-Checks system outputs for safety violations.
+Checks system outputs for safety violations before returning to the user.
+
+Checks performed:
+- PII detection and redaction (email, phone, SSN, credit card)
+- Harmful instructional content (detailed harmful instructions in output)
+- Citation consistency against retrieved sources (lightweight)
 """
 
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 import re
+
+
+# ── PII regex patterns ─────────────────────────────────────────────────────────
+_PII_PATTERNS: Dict[str, str] = {
+    "email": r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
+    # Require separators between groups to avoid matching year ranges and numbers
+    "phone": r'\b(?:\+?1[-.\s])?(?:\(\d{3}\)|\d{3})[-.\s]\d{3}[-.\s]\d{4}\b',
+    "ssn": r'\b\d{3}-\d{2}-\d{4}\b',
+    "credit_card": r'\b(?:\d{4}[-\s]){3}\d{4}\b',
+}
+
+# ── Harmful instructional output patterns ─────────────────────────────────────
+_HARMFUL_OUTPUT_PATTERNS: List[str] = [
+    r'step.by.step.{0,40}(hack|exploit|attack|steal|illegal)',
+    r'(how\s+to|instructions?\s+(for|to)).{0,40}(make|synthesize|create).{0,40}(drug|explosive|weapon)',
+    r'(detailed|complete|full)\s+(guide|instructions?|steps).{0,30}(illegal|harmful|dangerous\s+activity)',
+]
 
 
 class OutputGuardrail:
     """
-    Guardrail for checking output safety.
+    Validates system outputs before they reach the user.
 
-    TODO: YOUR CODE HERE
-    - Integrate with Guardrails AI or NeMo Guardrails
-    - Check for harmful content in responses
-    - Verify factual consistency
-    - Detect potential misinformation
-    - Remove PII (personal identifiable information)
+    Returns a result dict with:
+    - valid (bool): False if any violation found
+    - violations (list): all violations with type and severity
+    - sanitized_output (str): output after redaction/blocking
     """
 
     def __init__(self, config: Dict[str, Any]):
-        """
-        Initialize output guardrail.
-
-        Args:
-            config: Configuration dictionary
-        """
         self.config = config
 
-        # TODO: Initialize guardrail framework
-        # Suggested implementation:
-        # - Read output safety settings from config
-        # - Decide which checks should block vs sanitize
-        # - Optionally initialize Guardrails AI / NeMo Guardrails validators
+    def validate(
+        self, response: str, sources: Optional[List[Dict[str, Any]]] = None
+    ) -> Dict[str, Any]:
+        """Run all output checks and return aggregated result."""
+        violations: List[Dict[str, Any]] = []
 
-    def validate(self, response: str, sources: List[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """
-        Validate output response.
-
-        Args:
-            response: Generated response to validate
-            sources: Optional list of sources used (for fact-checking)
-
-        Returns:
-            Validation result
-
-        TODO: YOUR CODE HERE
-        - Implement validation logic
-        - Check for harmful content
-        - Check for PII
-        - Verify claims against sources
-        - Check for bias
-        """
-        violations = []
-
-        # TODO: Implement actual validation
-        # Suggested implementation:
-        # 1. Run helper checks such as _check_pii() and _check_harmful_content()
-        # 2. If sources are available, compare claims/citations against them
-        # 3. Decide whether to redact, refuse, or allow the response
-        # 4. Return sanitized_output for UI display when applicable
-
-        # Placeholder checks
-        pii_violations = self._check_pii(response)
-        violations.extend(pii_violations)
-
-        harmful_violations = self._check_harmful_content(response)
-        violations.extend(harmful_violations)
+        violations.extend(self._check_pii(response))
+        violations.extend(self._check_harmful_content(response))
 
         if sources:
-            consistency_violations = self._check_factual_consistency(response, sources)
-            violations.extend(consistency_violations)
+            violations.extend(self._check_factual_consistency(response, sources))
+
+        is_valid = len(violations) == 0
+        sanitized = self._sanitize(response, violations) if violations else response
 
         return {
-            "valid": len(violations) == 0,
+            "valid": is_valid,
             "violations": violations,
-            "sanitized_output": self._sanitize(response, violations) if violations else response
+            "sanitized_output": sanitized,
         }
 
     def _check_pii(self, text: str) -> List[Dict[str, Any]]:
-        """
-        Check for personally identifiable information.
+        """Detect personally identifiable information via regex."""
+        violations: List[Dict[str, Any]] = []
 
-        TODO: YOUR CODE HERE
-        Suggested implementation:
-        - Expand regex checks for emails, phone numbers, SSNs, addresses, etc.
-        - Use a stronger PII detection library if desired
-        - Return violation metadata needed for redaction
-        """
-        violations = []
+        for pii_type, pattern in _PII_PATTERNS.items():
+            raw_matches = re.findall(pattern, text)
+            # re.findall returns strings or tuples depending on groups
+            flat_matches = [
+                m if isinstance(m, str) else "".join(m)
+                for m in raw_matches
+            ]
+            flat_matches = [m.strip() for m in flat_matches if m.strip()]
 
-        # Simple regex patterns for common PII
-        patterns = {
-            "email": r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
-            "phone": r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b',
-            "ssn": r'\b\d{3}-\d{2}-\d{4}\b',
-        }
-
-        for pii_type, pattern in patterns.items():
-            matches = re.findall(pattern, text)
-            if matches:
+            if flat_matches:
                 violations.append({
                     "validator": "pii",
                     "pii_type": pii_type,
-                    "reason": f"Contains {pii_type}",
+                    "reason": f"Output contains {pii_type.replace('_', ' ')}",
                     "severity": "high",
-                    "matches": matches
+                    "matches": flat_matches[:5],  # cap for logging
+                    "pattern": pattern,
                 })
 
         return violations
 
     def _check_harmful_content(self, text: str) -> List[Dict[str, Any]]:
-        """
-        Check for harmful or inappropriate content.
+        """Detect harmful instructional content in the model's output."""
+        violations: List[Dict[str, Any]] = []
+        text_lower = text.lower()
 
-        TODO: YOUR CODE HERE
-        Suggested implementation:
-        - Detect unsafe instructions, hateful content, or violent guidance
-        - Use a moderation model, guardrail validator, or rule-based policy check
-        - Return severity levels so the caller knows whether to refuse or sanitize
-        """
-        violations = []
-
-        # Placeholder - should use proper toxicity detection
-        harmful_keywords = ["violent", "harmful", "dangerous"]
-        for keyword in harmful_keywords:
-            if keyword in text.lower():
+        for pattern in _HARMFUL_OUTPUT_PATTERNS:
+            if re.search(pattern, text_lower):
                 violations.append({
                     "validator": "harmful_content",
-                    "reason": f"May contain harmful content: {keyword}",
-                    "severity": "medium"
+                    "reason": "Output contains potentially harmful instructions",
+                    "severity": "high",
                 })
+                break
 
         return violations
 
     def _check_factual_consistency(
-        self,
-        response: str,
-        sources: List[Dict[str, Any]]
+        self, response: str, sources: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
         """
-        Check if response is consistent with sources.
-
-        TODO: YOUR CODE HERE
-        Suggested implementation:
-        - Compare claims in the response against the retrieved evidence
-        - Verify that citations actually support the statements made
-        - Optionally use an LLM-based verifier or a citation-grounding check
+        Lightweight citation consistency check.
+        Flags [Source: Title] citations that don't match retrieved source titles.
         """
-        violations = []
+        violations: List[Dict[str, Any]] = []
+        cited_titles = re.findall(r'\[Source:\s*([^\]]+)\]', response)
+        source_titles_lower = {
+            s.get("title", "").lower().strip() for s in sources
+        }
 
-        # Placeholder - this is complex and could use LLM
-        # to verify claims against sources
+        for cited in cited_titles:
+            if cited.lower().strip() not in source_titles_lower:
+                violations.append({
+                    "validator": "citation_consistency",
+                    "reason": f"Citation not found in retrieved sources: {cited[:60]}",
+                    "severity": "low",
+                })
 
         return violations
 
     def _check_bias(self, text: str) -> List[Dict[str, Any]]:
-        """
-        Check for biased language.
-
-        TODO: YOUR CODE HERE
-        Suggested implementation:
-        - Look for stereotypes, blanket generalizations, or discriminatory language
-        - Decide whether to redact, revise, or refuse the output
-        """
-        violations = []
-        # Implement bias detection
-        return violations
+        """Placeholder for bias detection (future work)."""
+        return []
 
     def _sanitize(self, text: str, violations: List[Dict[str, Any]]) -> str:
         """
-        Sanitize text by removing/redacting violations.
-
-        TODO: YOUR CODE HERE
-        Suggested implementation:
-        - Redact matched PII spans
-        - Replace unsafe sections with placeholder text
-        - Optionally return a refusal message for severe violations
+        Sanitize output:
+        1. If any high-severity non-PII violation → block entire response.
+        2. Otherwise → redact PII in-place.
         """
-        sanitized = text
+        # Block entirely for high-severity non-PII violations
+        blocking = [
+            v for v in violations
+            if v.get("severity") == "high" and v.get("validator") != "pii"
+        ]
+        if blocking:
+            return "This response has been blocked due to safety policy violations."
 
-        # Redact PII
+        # Redact PII with regex substitution
+        sanitized = text
         for violation in violations:
             if violation.get("validator") == "pii":
-                for match in violation.get("matches", []):
-                    sanitized = sanitized.replace(match, "[REDACTED]")
+                pattern = violation.get("pattern", "")
+                pii_type = violation.get("pii_type", "pii")
+                if pattern:
+                    sanitized = re.sub(
+                        pattern,
+                        f"[{pii_type.upper()} REDACTED]",
+                        sanitized,
+                    )
 
         return sanitized

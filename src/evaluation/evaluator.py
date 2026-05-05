@@ -135,14 +135,12 @@ class SystemEvaluator:
         # Run through orchestrator if available
         if self.orchestrator:
             try:
-                # Call orchestrator's process_query method
-                # TODO: YOUR CODE HERE
-                # Need to implement this in their orchestrator
-                response_data = self.orchestrator.process_query(query)
-                
-                # If process_query is async, use:
-                # response_data = await self.orchestrator.process_query(query)
-                
+                # Use async version when available (avoids cross-event-loop issues
+                # when the evaluator is already running under asyncio.run())
+                if hasattr(self.orchestrator, "process_query_async"):
+                    response_data = await self.orchestrator.process_query_async(query)
+                else:
+                    response_data = self.orchestrator.process_query(query)
             except Exception as e:
                 self.logger.error(f"Error processing query through orchestrator: {e}")
                 response_data = {

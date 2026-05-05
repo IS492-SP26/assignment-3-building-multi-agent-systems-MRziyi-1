@@ -1,0 +1,82 @@
+[
+  {
+    "id": 1,
+    "query": "What are the key principles of explainable AI for novice users in HCI?",
+    "category": "explainable_ai",
+    "ground_truth": "Key principles include transparency, simplicity, interactive explanations, progressive disclosure, and building user trust through understandable model behavior. Techniques include natural language explanations, visual representations (saliency maps, LIME/SHAP), and user-controllable detail levels.",
+    "expected_topics": ["transparency", "interpretability", "user trust", "visual explanations", "LIME", "SHAP"],
+    "expected_sources": ["academic papers on XAI", "HCI research on AI transparency", "user studies with novices"]
+  },
+  {
+    "id": 2,
+    "query": "How do users develop mental models of AI systems, and how can interfaces support this?",
+    "category": "mental_models",
+    "ground_truth": "Users develop mental models through interaction, feedback, and explanations. Interfaces can support accurate mental model formation through consistent feedback, progressive disclosure, onboarding tutorials, and explicit uncertainty communication.",
+    "expected_topics": ["mental models", "user cognition", "feedback", "onboarding", "transparency"],
+    "expected_sources": ["cognitive science papers", "HCI studies", "AI literacy research"]
+  },
+  {
+    "id": 3,
+    "query": "What are the main challenges in designing transparent AI decision-making systems for healthcare?",
+    "category": "healthcare_ai",
+    "ground_truth": "Challenges include balancing accuracy with interpretability, handling clinical complexity, ensuring regulatory compliance (FDA), communicating uncertainty to clinicians, preventing automation bias, and maintaining patient privacy.",
+    "expected_topics": ["clinical decision support", "interpretability", "automation bias", "privacy", "regulation"],
+    "expected_sources": ["medical informatics papers", "HCI in healthcare research", "clinical AI studies"]
+  },
+  {
+    "id": 4,
+    "query": "How has the design of AI explanation interfaces evolved in the past five years?",
+    "category": "xai_interface_evolution",
+    "ground_truth": null,
+    "expected_topics": ["natural language explanations", "interactive XAI", "counterfactual explanations", "SHAP visualizations"],
+    "expected_sources": ["recent CHI papers", "UIST proceedings", "AI systems research"]
+  },
+  {
+    "id": 5,
+    "query": "What design patterns effectively communicate uncertainty in AI-generated outputs to end users?",
+    "category": "uncertainty_communication",
+    "ground_truth": "Effective patterns include confidence indicators (bars, percentages), linguistic hedging in text ('possibly', 'likely'), visual uncertainty representations (error bars, fan charts), and alternative suggestion displays. User studies show numeric probabilities are often misinterpreted by non-experts.",
+    "expected_topics": ["uncertainty visualization", "confidence scores", "calibration", "trust calibration"],
+    "expected_sources": ["visualization research", "uncertainty communication studies", "perceptual studies"]
+  },
+  {
+    "id": 6,
+    "query": "How do cultural differences affect user trust in AI systems?",
+    "category": "cross_cultural_ai_trust",
+    "ground_truth": null,
+    "expected_topics": ["cross-cultural HCI", "trust", "Hofstede dimensions", "AI acceptance", "localization"],
+    "expected_sources": ["cross-cultural HCI research", "AI trust studies", "international user studies"]
+  },
+  {
+    "id": 7,
+    "query": "What accessibility considerations are important when designing explainable AI interfaces?",
+    "category": "accessible_xai",
+    "ground_truth": null,
+    "expected_topics": ["screen readers", "cognitive accessibility", "WCAG", "inclusive design", "AI for disability"],
+    "expected_sources": ["accessibility research", "inclusive design papers", "ASSETS conference proceedings"]
+  },
+  {
+    "id": 8,
+    "query": "How can conversational AI systems better communicate their reasoning and limitations to users?",
+    "category": "conversational_ai_transparency",
+    "ground_truth": "Conversational AI can improve transparency through: explicit capability/limitation disclosure, confidence-hedging language, source attribution, graceful failure handling, and proactive clarification requests. Users benefit most from just-in-time explanations rather than upfront disclaimers.",
+    "expected_topics": ["chatbots", "dialogue systems", "LLMs", "limitation disclosure", "hallucination"],
+    "expected_sources": ["conversational AI papers", "chatbot UX research", "LLM transparency studies"]
+  },
+  {
+    "id": 9,
+    "query": "What are the ethical implications of algorithmic transparency in social media recommendation systems?",
+    "category": "algorithmic_transparency_ethics",
+    "ground_truth": null,
+    "expected_topics": ["filter bubbles", "algorithmic accountability", "dark patterns", "GDPR", "fairness"],
+    "expected_sources": ["ethics papers", "social media research", "algorithmic accountability studies"]
+  },
+  {
+    "id": 10,
+    "query": "How do novice versus expert users differ in their preferences for AI explanation styles?",
+    "category": "user_expertise_xai",
+    "ground_truth": "Novices prefer simple natural language and visual explanations, while experts often prefer statistical and technical details. Adaptive explanation systems that adjust to user expertise show higher satisfaction. One-size-fits-all explanations often leave novices confused or experts under-informed.",
+    "expected_topics": ["user expertise", "adaptive explanations", "novice users", "personalization", "cognitive load"],
+    "expected_sources": ["user study papers", "XAI personalization research", "cognitive load studies"]
+  }
+]

@@ -1,0 +1,46 @@
+{
+  "session_id": "mental_models_demo_2026_05_03",
+  "timestamp": "2026-05-03T19:45:00",
+  "query": "How do users develop mental models of AI systems?",
+  "pipeline": "Planner → Researcher → Writer → Critic",
+  "model": "llama-3.3-70b-versatile (Groq)",
+  "conversation_history": [
+    {
+      "source": "Planner",
+      "type": "TextMessage",
+      "content": "Research Plan for: How do users develop mental models of AI systems?\n\n1. Search for academic papers on mental models and AI systems in HCI\n2. Find web resources on UX design and mental models\n3. Look for studies on user cognition when interacting with AI\n4. Gather information on how interface design supports mental model formation\n5. Collect evidence on trust, feedback, and transparency in AI interfaces\n\nKey search queries:\n- 'mental models AI systems HCI user study'\n- 'user cognition AI interface design'\n- 'AI transparency mental model formation'\n- 'UX design AI mental models trust'"
+    },
+    {
+      "source": "Researcher",
+      "type": "ToolCallMessage",
+      "content": "[Tool call: web_search(query='mental models AI systems HCI user study')]\n[Tool call: web_search(query='UX design AI mental models trust interaction')]\n[Tool call: paper_search(query='user mental models artificial intelligence transparency')]"
+    },
+    {
+      "source": "Researcher",
+      "type": "TextMessage",
+      "content": "Research findings:\n\n[1] IxDF (2026). Mental Models in UX/UI Design and AI. https://ixdf.org/literature/topics/mental-models\nMental models are crucial in UX/UI design and AI. Understanding how users conceptualize AI behavior is essential for effective interface design.\n\n[2] Nathan (Medium, 2024). Stop Overthinking UX Decisions: How AI + 7 Mental Models Can 10x Your Design Speed. https://medium.com/@Nathan78/stop-overthinking-ux-decisions-how-ai-7-mental-models-can-10x-your-design-speed-558e2f6673db\nCombining AI tools with mental model frameworks accelerates design decisions.\n\n[3] Figma (2026). Top AI Tools for UX Designers in 2026. https://www.figma.com/resource-library/ai-tools-for-ux-designers/\nAI tools help bridge the gap between user expectations and design capabilities.\n\n[4] EPIC People (n.d.). AI Mental Models & Trust: The Promises and Perils of Interaction. https://www.epicpeople.org/ai-mental-models-and-trust/\nUser prior technology experience significantly shapes AI mental model development."
+    },
+    {
+      "source": "Writer",
+      "type": "TextMessage",
+      "content": "# Final Response: How Users Develop Mental Models of AI Systems\n\nMental models are internal representations or understandings that users develop about how systems, particularly artificial intelligence (AI) systems, work. Given the increasing integration of AI into daily life, understanding how users develop these mental models is essential for creating effective, user-friendly, and transparent AI technologies.\n\n## User Experience and AI\n\nUser experience (UX) plays a significant role in shaping mental models of AI systems. The design and functionality of an AI system can influence user perceptions and understanding. A well-designed interface that provides clear feedback can help users develop accurate mental models of how the system operates. According to the Interaction Design Foundation (IxDF), understanding mental models is crucial in UX/UI design and AI [1].\n\n## Developing Mental Models through Interaction and Trust\n\nUsers develop mental models of AI systems through their interactions with these systems. Trust is a critical factor in this process — users are more likely to develop positive and accurate mental models of systems they trust. Combining AI with mental model frameworks can enhance UX design decisions [2].\n\n## Factors Influencing Mental Models\n\nSeveral factors influence mental model development: complexity of the AI system, user expertise level, and interface design. AI tools for UX designers are helping bridge the gap between rising expectations and limited time [3].\n\n## Case Studies: Real-World Examples\n\nUnderstanding what types of technology users have previously experienced can accelerate or hinder changes in their mental models of AI, as noted by EPIC People [4].\n\n## Conclusion\n\nUnderstanding how users develop mental models of AI systems is crucial for creating effective, user-friendly, and transparent AI technologies.\n\n## References\n\n[1] IxDF. (2026). What are Mental Models? Retrieved from https://ixdf.org/literature/topics/mental-models\n[2] Nathan. (n.d.). Stop Overthinking UX Decisions. Retrieved from https://medium.com/@Nathan78/stop-overthinking-ux-decisions-how-ai-7-mental-models-can-10x-your-design-speed-558e2f6673db\n[3] Figma. (2026). Top AI Tools for UX Designers. Retrieved from https://www.figma.com/resource-library/ai-tools-for-ux-designers/\n[4] EPIC People. (n.d.). AI Mental Models & Trust. Retrieved from https://www.epicpeople.org/ai-mental-models-and-trust/"
+    },
+    {
+      "source": "Critic",
+      "type": "TextMessage",
+      "content": "Evaluation of the response:\n\nStrengths:\n- The response is well-structured with clear headings\n- Covers key aspects: UX, interaction, trust, and real-world examples\n- Provides proper citations with URLs\n- Accessible language appropriate for the topic\n\nAreas for improvement:\n- Could include more academic/peer-reviewed sources\n- More specific examples of AI systems and their interface designs\n- Could address adaptive explanation systems\n\nOverall, this is a satisfactory response that adequately addresses the query with supporting evidence. TERMINATE"
+    }
+  ],
+  "final_response": "# Final Response: How Users Develop Mental Models of AI Systems\n\nMental models are internal representations or understandings that users develop about how systems, particularly artificial intelligence (AI) systems, work...",
+  "metadata": {
+    "num_messages": 5,
+    "num_sources": 4,
+    "agents_involved": ["Planner", "Researcher", "Writer", "Critic"],
+    "safety_events": [],
+    "output_sanitized": false
+  },
+  "ui_metrics": {
+    "sources_used": 3,
+    "quality_score": 9.40
+  }
+}

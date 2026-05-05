@@ -220,10 +220,11 @@ def display_response(result: Dict[str, Any]):
         with st.expander("⚠️ Safety Events", expanded=True):
             for event in safety_events:
                 event_type = event.get("type", "unknown")
-                action = event.get("action", "allow")
+                is_safe = event.get("safe", True)
+                action = "BLOCKED" if not is_safe else "ALLOWED"
                 violations = event.get("violations", [])
                 st.warning(
-                    f"{event_type.upper()} ({action.upper()}): "
+                    f"{event_type.upper()} ({action}): "
                     f"{len(violations)} violation(s) detected"
                 )
                 for violation in violations:
@@ -275,9 +276,17 @@ def display_sidebar():
 
         st.title("📊 Statistics")
 
-        # TODO: Get actual statistics
         st.metric("Total Queries", len(st.session_state.history))
-        st.metric("Safety Events", 0)  # TODO: Get from safety manager
+
+        # Get live safety stats from orchestrator's safety manager
+        safety_violations = 0
+        if st.session_state.orchestrator:
+            try:
+                stats = st.session_state.orchestrator.safety_manager.get_safety_stats()
+                safety_violations = stats.get("violations", 0)
+            except Exception:
+                pass
+        st.metric("Safety Events", safety_violations)
 
         st.divider()
 
@@ -340,8 +349,16 @@ def main():
         if st.button("🔍 Search", type="primary", use_container_width=True):
             if query.strip():
                 with st.spinner("Processing your query..."):
-                    # Process query
-                    result = asyncio.run(process_query(query))
+                    # Process query synchronously — orchestrator handles its own event loop
+                    result = st.session_state.orchestrator.process_query(query)
+                    citations = extract_citations(result)
+                    agent_traces = extract_agent_traces(result)
+                    metadata = result.get("metadata", {})
+                    metadata["agent_traces"] = agent_traces
+                    metadata["citations"] = citations
+                    metadata["critique_score"] = calculate_quality_score(result)
+                    result["citations"] = citations
+                    result["metadata"] = metadata
 
                     # Add to history
                     st.session_state.history.append({
@@ -393,8 +410,26 @@ def main():
     if st.session_state.show_safety_log:
         st.divider()
         st.markdown("### 🛡️ Safety Event Log")
-        # TODO: Display safety events from safety manager
-        st.info("No safety events recorded.")
+        events = []
+        if st.session_state.orchestrator:
+            try:
+                events = st.session_state.orchestrator.safety_manager.get_safety_events()
+            except Exception:
+                pass
+
+        if events:
+            for event in reversed(events[-20:]):  # show latest 20
+                ts = event.get("timestamp", "")[:19]
+                etype = event.get("type", "?").upper()
+                safe = event.get("safe", True)
+                violations = event.get("violations", [])
+                icon = "✅" if safe else "🚫"
+                with st.expander(f"{icon} [{ts}] {etype} — {'safe' if safe else 'blocked'}", expanded=not safe):
+                    st.text(f"Content preview: {event.get('content_preview', '')}")
+                    for v in violations:
+                        st.warning(f"• {v.get('category', '?')}: {v.get('reason', '')}")
+        else:
+            st.info("No safety events recorded.")
 
 
 if __name__ == "__main__":

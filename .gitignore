@@ -3,6 +3,19 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+# Local-only files (contain instructor-provided shared keys, do not commit)
+Req.md
+.vscode/
+
+# macOS / editor cruft
+.DS_Store
+.claude/
+
+# Technical report — submitted separately from the GitHub repo, keep local only.
+# Repo still ships the supporting artifacts (session export, synthesized answer,
+# judge sample, evaluation JSONs, screenshots) so the grader can reproduce results.
+outputs/
+
 # C extensions
 *.so
 
@@ -209,9 +222,11 @@ __marimo__/
 # Assignment-specific
 logs/
 *.log
-data/*.json
 data/*.csv
-!data/example_queries.json
-outputs/
 *.pkl
 *.pickle
+# NOTE: outputs/ artifacts (session JSON, synthesized answer, evaluation JSON,
+# judge samples, screenshots) are required by the assignment rubric and MUST
+# be tracked. Only the technical report markdown is excluded — see top of file.
+# NOTE: data/test_queries.json is required (>5 diverse evaluation prompts) and
+# must be tracked. Only large user-contributed datasets should be excluded.

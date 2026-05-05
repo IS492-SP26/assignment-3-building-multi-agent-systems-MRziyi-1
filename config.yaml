@@ -3,7 +3,7 @@
 
 system:
   name: "Multi-Agent Research Assistant"
-  topic: "HCI Research"  # Change this to your chosen topic
+  topic: "AI Transparency and Explainability in HCI"
   max_iterations: 10
   timeout_seconds: 300
 
@@ -62,19 +62,20 @@ agents:
     #   Say "APPROVED - RESEARCH COMPLETE" or "NEEDS REVISION".
 
 models:
-  # Default model for agents (Groq)
+  # Default model for agents (Groq API — 70B for reliable tool use)
   default:
-    provider: "vllm"
-    name: "openai/gpt-oss-20b"
+    provider: "groq"
+    name: "llama-3.3-70b-versatile"
     temperature: 0.7
     max_tokens: 2048
 
-  # Judge model for evaluation
+  # Judge model for evaluation (separate Groq client for independent scoring;
+  # falls back to vLLM/Qwen3 if GROQ_API_KEY is unavailable — see judge.py).
   judge:
-    provider: "vllm"
-    name: "openai/gpt-oss-20b"
+    provider: "groq"
+    name: "llama-3.3-70b-versatile"
     temperature: 0.3
-    max_tokens: 1024
+    max_tokens: 2048
 
 tools:
   web_search:
@@ -109,7 +110,7 @@ safety:
 
 evaluation:
   enabled: true
-  num_test_queries: 10
+  num_test_queries: 6
 
   # Judge criteria
   criteria:
